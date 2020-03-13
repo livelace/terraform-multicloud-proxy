@@ -75,6 +75,7 @@ docker run -ti --rm -e UID=$UID \
 ```
 
 This will produce virtual machines images with individual settings for every cloud provider and place those images into "/data/packer/images". 
+Don't forget to rebuild images if you change some settings in configuration file (SSH keys, port numbers, white lists etc.). 
 
 **Deploy clouds infrastructures:**
 
@@ -116,7 +117,7 @@ gcloud iam service-accounts list
 
 gcloud iam service-accounts keys create \
     --iam-account "terraform-multicloud-proxy-sa@<PROJECT>.iam.gserviceaccount.com" \
-    "~/terraform-multicloud-proxy-sa-google.json" 
+    ~/terraform-multicloud-proxy-sa-google.json
 
 gcloud projects add-iam-policy-binding "<PROJECT>" \
   --member "serviceAccount:terraform-multicloud-proxy-sa@<PROJECT>.iam.gserviceaccount.com" \
@@ -137,7 +138,7 @@ yc iam service-account create \
 
 yc iam key create \
     --service-account-name "terraform-multicloud-proxy-sa" \
-    --output "~/terraform-multicloud-proxy-sa-yandex.json"
+    --output ~/terraform-multicloud-proxy-sa-yandex.json
 
 yc resource-manager folder add-access-binding "<FOLDER_NAME>" \
     --subject "serviceAccount:<SERVICE_ACCOUNT_ID>" \
