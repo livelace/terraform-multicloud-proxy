@@ -78,7 +78,7 @@ docker run -ti --rm -e UID=$UID \
 ```
 
 This will produce virtual machines images with individual settings for every cloud provider and place those images into "/data/packer/images".  
-Don't forget to rebuild images if you change some settings in configuration file (SSH keys, port numbers, white lists etc.). 
+Don't forget to rebuild images if you change some settings in the configuration file (SSH keys, port numbers, white lists etc.). 
 
 **Deploy clouds infrastructures:**
 
@@ -109,7 +109,7 @@ Some additional information about service accounts creation which are needed for
 
 **Amazon:**
  
-Managing Amazon IAM permissions polices are out of scope of this project, you have to review resources declared in configuration file and adjust your permissions settings by yourself. And don't forget to review some information about [image importing](https://docs.aws.amazon.com/vm-import/latest/userguide/vmimport-image-import.html).
+Managing Amazon IAM permissions polices are out of scope of this project, you have to review resources declared in the configuration file and adjust your permissions settings by yourself. And don't forget to review some information about [image importing](https://docs.aws.amazon.com/vm-import/latest/userguide/vmimport-image-import.html).
 
 **Google:**
 
