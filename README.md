@@ -1,4 +1,4 @@
-##Description:
+## Description:
 
 This project is a set of tools that allow to deploy virtual machines with various proxy applications 
 ([Dante](https://www.inet.no/dante/), [Tinyproxy](https://github.com/tinyproxy/tinyproxy), [Tor](https://www.torproject.org/)) in such clouds as [Amazon](https://aws.amazon.com/), [Google](https://cloud.google.com/), [Yandex](https://cloud.yandex.com/). It can be handy when you have to check your apps from different parts of the world. This set shouldn't be considered as a "production tool", but rather as a "development tool". This set can be easily adapted for any task, when you need something up and running in clouds.
@@ -25,7 +25,7 @@ Typical workflow:
 2. CPU with AMD-v/VT-x (virtualization is needed for image building, it's too slow to do that without).
 3. Cloud credentials with appropriate permissions.
 
-##Usage:
+## Usage:
 
 
 **Get help information:**
@@ -103,7 +103,7 @@ docker run -ti --rm -e UID=$UID \
 This will destroy every object in clouds that were produced during deployment.
 
 
-##Cloud credentials:
+## Cloud credentials:
 
 Some additional information about service accounts creation which are needed for performing operations inside clouds (don't use your primary accounts, furthermore, it's much better to use dedicated projects). For more details see the official documentations ([Amazon](https://aws.amazon.com/cli/), [Google](https://cloud.google.com/sdk), [Yandex](https://cloud.yandex.com/docs/cli/)).
 
