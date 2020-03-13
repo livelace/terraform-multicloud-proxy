@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+
+set -e
+set -u
+set -x
+
+export BOOTLOADER="grub"
+export BOOT_SIZE="{{ boot_size }}"
+export SWAP_SIZE="{{ swap_size }}"
+
+# -----------------------------------------------------------------------------
+# pre-conditions.
+
+if [[ -b "/dev/sda" ]];then
+    DISK="/dev/sda"
+elif [[ -b "/dev/vda" ]];then
+    DISK="/dev/vda"
+else
+    echo "ERROR: Cannot identify target disk for installation!"
+    exit 1
+fi
+
+# -----------------------------------------------------------------------------
+# install steps.
+
+ANSWERS_FILE="/tmp/alpine-setup.answers"
+
+cat > "$ANSWERS_FILE" <<EOF
+APKREPOSOPTS="-1"
+DISKOPTS="-k virt -m sys $DISK"
+DNSOPTS="8.8.8.8"
+KEYMAPOPTS="us us"
+HOSTNAMEOPTS="-n proxy"
+INTERFACESOPTS="auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+    hostname proxy
+"
+NTPOPTS="-c none"
+PROXYOPTS="none"
+SSHDOPTS="-c openssh"
+TIMEZONEOPTS="-z UTC"
+EOF
+
+yes | setup-alpine -e -f "$ANSWERS_FILE"
+
+# -----------------------------------------------------------------------------
+# post-install steps.
+
+mkdir -p /mnt/root
+
+mount "${DISK}3" "/mnt/root"
+mount "${DISK}1" "/mnt/root/boot"
+
+mount -o bind /dev "/mnt/root/dev"
+mount -t proc none "/mnt/root/proc"
+mount -t sysfs none "/mnt/root/sys"
+
+CHROOT_FILE="/mnt/root/tmp/post-install.sh"
+
+cat > "$CHROOT_FILE" <<EOF
+echo "root:{{ password }}" | chpasswd
+
+echo "{{ alpine_mirror_url }}/alpine/edge/main" > "/etc/apk/repositories"
+echo "{{ alpine_mirror_url }}/alpine/edge/community" >> "/etc/apk/repositories"
+echo "{{ alpine_mirror_url }}/alpine/edge/testing" >> "/etc/apk/repositories"
+
+apk update
+apk upgrade
+apk add dante-server htop iperf iptables ip6tables nmap tcpdump tinyproxy tmux tor vim
+
+rc-update add iptables default
+rc-update add ip6tables default
+rc-update add sockd default
+rc-update add tinyproxy default
+rc-update add tor default
+
+# it needs for avoiding amazon's kernel versions restrictions >_<.
+# https://www.youtube.com/results?search_query=fuck+the+police
+
+mv /boot/config-virt /boot/config-{{ fake_kernel_version }}
+mv /boot/initramfs-virt /boot/initramfs-{{ fake_kernel_version }}
+mv /boot/vmlinuz-virt /boot/vmlinuz-{{ fake_kernel_version }}
+mv /boot/System.map-virt /boot/System.map-{{ fake_kernel_version }}
+
+cp -ar "/lib/modules/`apk info -L linux-virt | grep 'cpuid.ko' | cut -d '/' -f 3`" "/lib/modules/{{ fake_kernel_version }}"
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
+rm -rf /var/cache/apk/*
+
+exit
+EOF
+
+chroot "/mnt/root" "/bin/bash" "/tmp/post-install.sh"
+
+# -----------------------------------------------------------------------------
+# configurations steps.
+
+mkdir -p "/mnt/root/root/.ssh" && chmod 700 "/mnt/root/root/.ssh"

@@ -1,0 +1,125 @@
+# -----------------------------------------------------------------------------
+
+
+- name: "Create Packer directory: {{ packer_config }}"
+  file:
+    path: "{{ packer_config }}"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+- name: "Create Packer directory: {{ packer_config }}/conf"
+  file:
+    path: "{{ packer_config }}/conf"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+# -----------------------------------------------------------------------------
+
+- name: "Generate Dante configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/dante.conf.j2"
+    dest: "{{ packer_config }}/conf/dante.conf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Iptables configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/iptables.rules.j2"
+    dest: "{{ packer_config }}/conf/iptables.rules"
+  when: target_stage == 'genconf'
+
+- name: "Generate Tinyproxy configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/tinyproxy.conf.j2"
+    dest: "{{ packer_config }}/conf/tinyproxy.conf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Tor configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/tor.conf.j2"
+    dest: "{{ packer_config }}/conf/tor.conf"
+  when: target_stage == 'genconf'
+
+# -----------------------------------------------------------------------------
+
+- name: "Generate Packer template."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/packer.json.j2"
+    dest: "{{ packer_config }}/template.json"
+  when: target_stage == 'genconf'
+
+- name: "Generate Packer install script."
+  template:
+    src: "{{ playbook_dir }}/resources/scripts/install.sh.j2"
+    dest: "{{ packer_config }}/install.sh"
+  when: target_stage == 'genconf'
+
+# -------------------------------------
+
+- name: "Build Packer image."
+  environment:
+    PACKER_CACHE_DIR: "{{ packer_cache }}"
+  shell: packer build -force "{{ packer_config }}/template.json"
+  when: target_stage == "build"
+
+# -----------------------------------------------------------------------------
+
+- name: "Create Terraform directory: {{ terraform_config }}"
+  file:
+    path: "{{ terraform_config }}"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template: {{ terraform_config }}/main.tf"
+  template:
+    src: "terraform/main.tf.j2"
+    dest: "{{ terraform_config }}/main.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template: {{ terraform_config }}/outputs.tf"
+  template:
+    src: "terraform/outputs.tf.j2"
+    dest: "{{ terraform_config }}/outputs.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template: {{ terraform_config }}/variables.tf"
+  template:
+    src: "terraform/variables.tf.j2"
+    dest: "{{ terraform_config }}/variables.tf"
+  when: target_stage == 'genconf'
+
+# -------------------------------------
+
+- name: "Init Terraform plan."
+  shell: terraform init
+  args:
+    chdir: "{{ terraform_config }}"
+  when: target_stage == "deploy"
+
+- name: "Apply Terraform plan."
+  shell: terraform apply -auto-approve
+  args:
+    chdir: "{{ terraform_config }}"
+  when: target_stage == "deploy"
+
+- name: "Destroy Terraform infrastructure."
+  shell: terraform destroy -auto-approve
+  args:
+    chdir: "{{ terraform_config }}"
+  when: target_stage == "destroy"
+
+# -----------------------------------------------------------------------------
+
+- name: "Terraform output."
+  shell: terraform output -json
+  args:
+    chdir: "{{ terraform_config }}"
+  register: "terraform_output"
+  when: target_stage == "deploy"
+
+- name: "Instances public addresses."
+  debug:
+    msg: "{{ (terraform_output.stdout | from_json)['instance_ips']['value'][0] }}"
+  when: target_stage == "deploy"
+
+# -----------------------------------------------------------------------------
+
