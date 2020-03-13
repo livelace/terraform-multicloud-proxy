@@ -37,7 +37,7 @@ docker run -ti --rm -e UID=$UID \
     livelace/terraform-multicloud-proxy-bootstrap help
 ```
 
-Some commands can be run with specific cloud as an argument.
+Some commands can be run with a specific cloud as an argument.
 
 **Initialize sample configuration:**
 
