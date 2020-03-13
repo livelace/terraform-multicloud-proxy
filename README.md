@@ -74,7 +74,7 @@ docker run -ti --rm -e UID=$UID \
     livelace/terraform-multicloud-proxy-bootstrap build
 ```
 
-This will produce virtual machines images with individual settings for every cloud provider and place those images into "/data/packer/images". 
+This will produce virtual machines images with individual settings for every cloud provider and place those images into "/data/packer/images".  
 Don't forget to rebuild images if you change some settings in configuration file (SSH keys, port numbers, white lists etc.). 
 
 **Deploy clouds infrastructures:**
