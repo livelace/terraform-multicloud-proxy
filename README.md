@@ -61,7 +61,8 @@ docker run -ti --rm -e UID=$UID \
     livelace/terraform-multicloud-proxy-bootstrap genconf
 ```
 
-This will produce different configurations for above mentioned apps and place all those stuff into "/data" directory.
+This will produce different configurations for above mentioned apps and place all those stuff into "/data" directory.  
+Repeat this command if you change something in the configuration file.
 
 **Build virtual machines images:**
 
