@@ -32,8 +32,8 @@ Typical workflow:
 
 ```bash
 docker run -ti --rm -e UID=$UID \
-    -v ./conf:/conf \
-    -v ./data:/data \
+    -v $(pwd)/conf:/conf \
+    -v $(pwd)/data:/data \
     livelace/terraform-multicloud-proxy-bootstrap help
 ```
 

@@ -7,5 +7,5 @@ fi
 
 useradd -d /data -u "$UID" user
 
-chown "$UID" /dev/kvm || true
+chown "$UID" /dev/kvm >dev/null 2>&1 || true
 su user -s /bin/bash -c "/entrypoint.sh $1 $2"
