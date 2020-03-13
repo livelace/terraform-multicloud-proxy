@@ -41,8 +41,8 @@ docker run -ti --rm -e UID=$UID \
 
 ```bash
 docker run -ti --rm -e UID=$UID \
-    -v ./conf:/conf \
-    -v ./data:/data \
+    -v $(pwd)/conf:/conf \
+    -v $(pwd)/data:/data \
     livelace/terraform-multicloud-proxy-bootstrap init
 ```
 
@@ -56,8 +56,8 @@ This will generate and place into "/conf" directory:
 
 ```bash
 docker run -ti --rm -e UID=$UID \
-    -v ./conf:/conf \
-    -v ./data:/data \
+    -v $(pwd)/conf:/conf \
+    -v $(pwd)/data:/data \
     livelace/terraform-multicloud-proxy-bootstrap genconf
 ```
 
@@ -69,8 +69,8 @@ This will produce different configurations for above mentioned apps and place al
 docker run -ti --rm -e UID=$UID \
     --privileged \
     -v /dev/kvm:/dev/kvm \
-    -v ./conf:/conf \
-    -v ./data:/data \
+    -v $(pwd)/conf:/conf \
+    -v $(pwd)/data:/data \
     livelace/terraform-multicloud-proxy-bootstrap build
 ```
 
@@ -80,8 +80,8 @@ This will produce virtual machines images with individual settings for every clo
 
 ```bash
 docker run -ti --rm -e UID=$UID \
-    -v ./conf:/conf \
-    -v ./data:/data \
+    -v $(pwd)/conf:/conf \
+    -v $(pwd)/data:/data \
     terraform-multicloud-proxy-bootstrap deploy
 ```
 
@@ -91,8 +91,8 @@ This will take some time for deploying virtual machines inside clouds. If someth
 
 ```bash
 docker run -ti --rm -e UID=$UID \
-    -v ./conf:/conf \
-    -v ./data:/data \
+    -v $(pwd)/conf:/conf \
+    -v $(pwd)/data:/data \
     terraform-multicloud-proxy-bootstrap destroy
 ```
 
