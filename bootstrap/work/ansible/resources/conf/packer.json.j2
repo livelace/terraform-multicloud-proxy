@@ -1,0 +1,89 @@
+{
+  "builders": [
+    {
+      "type": "qemu",
+      "iso_url": "{{ alpine_iso_url }}",
+      "iso_checksum": "{{ alpine_iso_checksum }}",
+      "iso_checksum_type": "{{ alpine_iso_checksum_type }}",
+      "format": "{{ packer_image_format }}",
+      "accelerator": "kvm",
+      "disk_size": "{{ disk_size }}",
+      "disk_interface": "virtio",
+      "headless": true,
+      "http_directory": "{{ packer_common }}/http",
+      "ssh_username": "root",
+      "ssh_password": "packer",
+      "ssh_wait_timeout": "50000s",
+      "shutdown_command": "poweroff",
+      "output_directory": "{{ packer_config }}/tmp",
+      "vm_name": "{{ packer_image_name }}",
+      "boot_wait": "10s",
+      {% raw -%}
+      "boot_command": [
+        "root<enter><wait>",
+        "apk add bash curl dhcpcd<enter><wait>",
+        "dhcpcd eth0<enter><wait5>",
+        "curl http://{{ .HTTPIP }}:{{ .HTTPPort }}/enable_ssh.sh | bash<enter>"
+      ]
+      {%- endraw %}
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "{{ packer_config }}/install.sh"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{ packer_config }}/conf/iptables.rules",
+      "destination": "/mnt/root/etc/iptables/rules-save"
+    },
+    {
+      "type": "file",
+      "source": "{{ packer_config }}/conf/dante.conf",
+      "destination": "/mnt/root/etc/sockd.conf"
+    },
+    {
+      "type": "file",
+      "source": "{{ packer_config }}/conf/tinyproxy.conf",
+      "destination": "/mnt/root/etc/tinyproxy/tinyproxy.conf"
+    },
+    {
+      "type": "file",
+      "source": "{{ packer_config }}/conf/tor.conf",
+      "destination": "/mnt/root/etc/tor/torrc"
+    },
+    {
+      "type": "file",
+      "source": "{{ conf_auth }}/{{ ssh_secret_key }}",
+      "destination": "/mnt/root/root/.ssh/id_rsa"
+    },
+    {
+      "type": "file",
+      "source": "{{ conf_auth }}/{{ ssh_public_key }}",
+      "destination": "/mnt/root/root/.ssh/id_rsa.pub"
+    },
+    {
+      "type": "file",
+      "source": "{{ conf_auth }}/{{ ssh_public_key }}",
+      "destination": "/mnt/root/root/.ssh/authorized_keys"
+    }
+  ],
+{% if packer_type == "amazon" or packer_type == "yandex" %}
+  "post-processors": [
+    {
+      "type": "shell-local",
+      "inline": ["mv {{ packer_config }}/tmp/{{ packer_image_name }} {{ packer_images }}/{{ packer_target_image }}"]
+    }
+  ]
+{% elif packer_type == "google" %}
+  "post-processors": [
+    {
+      "type": "compress",
+      "output": "{{ packer_images }}/{{ packer_target_image }}"
+    }
+  ]
+{% endif %}
+}

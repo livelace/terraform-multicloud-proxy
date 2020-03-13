@@ -1,0 +1,17 @@
+provider "aws" {
+  access_key = "{{ access_key }}"
+  secret_key = "{{ secret_key }}"
+  region = "{{ region }}"
+}
+
+resource "aws_s3_bucket" "{{ bucket_name }}" {
+  bucket = "{{ bucket_name }}"
+}
+
+resource "aws_s3_bucket_object" "{{ image_name }}" {
+  bucket = "{{ bucket_name }}"
+  key    = "{{ image_name }}"
+  source = "{{ packer_images }}/{{ packer_amazon_target_image }}"
+
+  depends_on = [aws_s3_bucket.{{ bucket_name }}]
+}

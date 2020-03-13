@@ -1,0 +1,9 @@
+- name: "Manage cloud."
+  include: "{{ playbook_dir }}/include/manage_cloud.yaml
+    packer_type=yandex
+    packer_config={{ packer_yandex }}
+    packer_image_format={{ packer_yandex_image_format }}
+    packer_image_name={{ packer_yandex_image_name }}
+    packer_target_image={{ packer_yandex_target_image }}
+    terraform_config={{ terraform_yandex }}
+    password={{ root_password }}"

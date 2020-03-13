@@ -1,0 +1,146 @@
+provider "aws" {
+  access_key  = "{{ access_key }}"
+  secret_key  = "{{ secret_key }}"
+  region      = "{{ region }}"
+}
+
+data "aws_ami" "{{ image_name }}" {
+  most_recent = true
+
+  filter {
+    name   = "tag-key"
+    values = ["multicloud-proxy"]
+  }
+
+  owners = ["self"]
+}
+
+resource "aws_vpc" "{{ network_name }}" {
+  cidr_block = "{{ network_cidr }}"
+
+  tags = {
+    Name = "{{ network_name }}"
+  }
+}
+
+resource "aws_subnet" "{{ subnet_name }}" {
+  vpc_id            = aws_vpc.{{ network_name }}.id
+  cidr_block        = "{{ subnet_cidr }}"
+  availability_zone = "{{ availability_zone }}"
+
+  tags = {
+    Name = "{{ subnet_name }}"
+  }
+
+  depends_on = [aws_vpc.{{ network_name }}]
+}
+
+resource "aws_internet_gateway" "{{ internet_gateway }}" {
+  vpc_id = aws_vpc.{{ network_name }}.id
+
+  tags = {
+    Name = "{{ internet_gateway }}"
+  }
+
+  depends_on = [aws_vpc.{{ network_name }}]
+}
+
+data "aws_route_table" "{{ route_table }}" {
+  vpc_id = aws_vpc.{{ network_name }}.id
+}
+
+resource "aws_route" "route" {
+  route_table_id            = data.aws_route_table.{{ route_table }}.id
+  destination_cidr_block    = "0.0.0.0/0"
+  gateway_id = aws_internet_gateway.{{ internet_gateway }}.id
+}
+
+resource "aws_security_group" "{{ security_group }}" {
+  name              = "{{ security_group }}"
+  vpc_id            = aws_vpc.{{ network_name }}.id
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [
+{% for item in whitelist %}
+      "{{ item }}",
+{% endfor %}
+    ]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "{{ security_group }}"
+  }
+
+  depends_on = [aws_vpc.{{ network_name }}]
+}
+
+resource "aws_instance" "{{ instance_name }}" {
+  count = {{ count }}
+
+  ami               =   data.aws_ami.{{ image_name }}.id
+  instance_type     =   "{{ instance_type }}"
+  subnet_id         =   aws_subnet.{{ subnet_name }}.id
+
+  root_block_device {
+    delete_on_termination = true
+  }
+
+  associate_public_ip_address = true
+
+  vpc_security_group_ids = [
+    aws_security_group.{{ security_group }}.id
+  ]
+
+  depends_on = [
+    data.aws_ami.{{ image_name }},
+    aws_vpc.{{ network_name }},
+    aws_subnet.{{ subnet_name }}
+  ]
+
+  tags = {
+    Name = "{{ instance_name }}-${count.index}"
+  }
+}
+
+{% if powerdns_enable == "true" %}
+
+provider "powerdns" {
+  api_key    = "{{ powerdns_api_key }}"
+  server_url = "{{ powerdns_server_url }}"
+}
+
+resource "powerdns_zone" "amazon" {
+  name    = "amazon.{{ powerdns_base_zone }}."
+  kind    = "Native"
+  nameservers = [
+    "ns1.amazon.{{ powerdns_base_zone }}.",
+    "ns2.amazon.{{ powerdns_base_zone }}."
+  ]
+}
+
+resource "powerdns_record" "amazon" {
+  count = {{ count }}
+
+  zone    = "amazon.{{ powerdns_base_zone }}."
+  name    = "{{ instance_name }}-${count.index}.amazon.{{ powerdns_base_zone }}."
+  type    = "A"
+  ttl     = 300
+  records = [aws_instance.{{ instance_name }}[count.index].public_ip]
+
+  depends_on = [
+    aws_instance.{{ instance_name }},
+    powerdns_zone.amazon
+  ]
+}
+
+{% endif %}

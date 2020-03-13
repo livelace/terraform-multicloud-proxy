@@ -1,0 +1,43 @@
+---
+
+# -----------------------------------------------------------
+
+conf_base:                  "/conf"
+data_base:                  "/data"
+conf_auth:                  "{{ conf_base }}/auth"
+
+# -----------------------------------------------------------
+
+packer_base:                "{{ data_base }}/packer"
+
+packer_cache:               "{{ packer_base }}/packer_cache"
+packer_common:              "{{ packer_base }}/common"
+packer_images:              "{{ packer_base }}/images"
+
+packer_amazon:              "{{ packer_base }}/amazon"
+packer_google:              "{{ packer_base }}/google"
+packer_yandex:              "{{ packer_base }}/yandex"
+
+packer_amazon_image_name:   "amazon.raw"
+packer_amazon_image_format: "raw"
+packer_amazon_target_image: "multicloud-proxy-amazon.raw"
+
+packer_google_image_name:   "disk.raw"
+packer_google_image_format: "raw"
+packer_google_target_image: "multicloud-proxy-google.raw.tar.gz"
+
+packer_yandex_image_name:   "yandex.qcow2"
+packer_yandex_image_format: "qcow2"
+packer_yandex_target_image: "multicloud-proxy-yandex.qcow2"
+
+# -----------------------------------------------------------
+
+terraform_base:             "{{ data_base }}/terraform"
+
+terraform_amazon:           "{{ terraform_base }}/amazon"
+terraform_amazon_step1:     "{{ terraform_base }}/amazon/step1"
+terraform_amazon_step2:     "{{ terraform_base }}/amazon/step2"
+terraform_google:           "{{ terraform_base }}/google"
+terraform_yandex:           "{{ terraform_base }}/yandex"
+
+# -----------------------------------------------------------

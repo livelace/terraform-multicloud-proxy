@@ -1,0 +1,9 @@
+- name: "Manage cloud."
+  include: "{{ playbook_dir }}/include/manage_cloud.yaml
+    packer_type=google
+    packer_config={{ packer_google }}
+    packer_image_format={{ packer_google_image_format }}
+    packer_image_name={{ packer_google_image_name }}
+    packer_target_image={{ packer_google_target_image }}
+    terraform_config={{ terraform_google }}
+    password={{ root_password }}"

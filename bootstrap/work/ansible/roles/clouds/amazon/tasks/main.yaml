@@ -1,0 +1,268 @@
+# -----------------------------------------------------------------------------
+
+- name: "Create AWS configuration directory: {{ ansible_env.HOME}}/.aws"
+  file:
+    path: "{{ ansible_env.HOME}}/.aws"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+- name: "Generate AWS configuration: {{ ansible_env.HOME}}.aws/credentials"
+  template:
+    src: "{{ playbook_dir }}/resources/conf/aws.credentials.j2"
+    dest: "{{ ansible_env.HOME}}/.aws/credentials"
+  when: target_stage == 'genconf'
+
+# -----------------------------------------------------------------------------
+
+- name: "Create Packer directory: {{ packer_amazon }}"
+  file:
+    path: "{{ packer_amazon }}"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+- name: "Create Packer directory: {{ packer_amazon }}/conf"
+  file:
+    path: "{{ packer_amazon }}/conf"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+# -----------------------------------------------------------------------------
+
+- name: "Generate Dante configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/dante.conf.j2"
+    dest: "{{ packer_amazon }}/conf/dante.conf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Iptables configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/iptables.rules.j2"
+    dest: "{{ packer_amazon }}/conf/iptables.rules"
+  when: target_stage == 'genconf'
+
+- name: "Generate Tinyproxy configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/tinyproxy.conf.j2"
+    dest: "{{ packer_amazon }}/conf/tinyproxy.conf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Tor configuration."
+  template:
+    src: "{{ playbook_dir }}/resources/conf/tor.conf.j2"
+    dest: "{{ packer_amazon }}/conf/tor.conf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Packer template."
+  vars:
+    packer_type: "amazon"
+    packer_config: "{{ packer_amazon }}"
+    packer_image_format: "{{ packer_amazon_image_format }}"
+    packer_image_name: "{{ packer_amazon_image_name }}"
+    packer_target_image: "{{ packer_amazon_target_image }}"
+  template:
+    src: "{{ playbook_dir }}/resources/conf/packer.json.j2"
+    dest: "{{ packer_amazon }}/template.json"
+  when: target_stage == 'genconf'
+
+- name: "Generate Packer install script."
+  vars:
+    password: "{{ root_password }}"
+  template:
+    src: "{{ playbook_dir }}/resources/scripts/install.sh.j2"
+    dest: "{{ packer_amazon }}/install.sh"
+  when: target_stage == 'genconf'
+
+# -------------------------------------
+
+- name: "Build Packer image."
+  environment:
+    PACKER_CACHE_DIR: "{{ packer_cache }}"
+  shell: packer build -force "{{ packer_amazon }}/template.json"
+  when: target_stage == "build"
+
+# -----------------------------------------------------------------------------
+
+- name: "Create Terraform directory for step1: {{ terraform_amazon_step1 }}"
+  file:
+    path: "{{ terraform_amazon_step1 }}"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+- name: "Create Terraform directory for step2: {{ terraform_amazon_step2 }}"
+  file:
+    path: "{{ terraform_amazon_step2 }}"
+    state: "directory"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template for step1: {{ terraform_amazon_step1 }}/main.tf"
+  template:
+    src: "terraform/step1/main.tf.j2"
+    dest: "{{ terraform_amazon_step1 }}/main.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template for step1: {{ terraform_amazon_step1 }}/outputs.tf"
+  template:
+    src: "terraform/step1/outputs.tf.j2"
+    dest: "{{ terraform_amazon_step1 }}/outputs.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template for step1: {{ terraform_amazon_step1 }}/variables.tf"
+  template:
+    src: "terraform/step1/variables.tf.j2"
+    dest: "{{ terraform_amazon_step1 }}/variables.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template for step2: {{ terraform_amazon_step2 }}/main.tf"
+  template:
+    src: "terraform/step2/main.tf.j2"
+    dest: "{{ terraform_amazon_step2 }}/main.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template for step2: {{ terraform_amazon_step2 }}/outputs.tf"
+  template:
+    src: "terraform/step2/outputs.tf.j2"
+    dest: "{{ terraform_amazon_step2 }}/outputs.tf"
+  when: target_stage == 'genconf'
+
+- name: "Generate Terraform template for step2: {{ terraform_amazon_step2 }}/variables.tf"
+  template:
+    src: "terraform/step2/variables.tf.j2"
+    dest: "{{ terraform_amazon_step2 }}/variables.tf"
+  when: target_stage == 'genconf'
+
+# -------------------------------------
+
+- name: "Init Terraform plan for step1."
+  shell: terraform init
+  args:
+    chdir: "{{ terraform_amazon_step1 }}"
+  when: target_stage == "deploy"
+
+- name: "Apply Terraform plan for step1."
+  shell: terraform apply -auto-approve
+  args:
+    chdir: "{{ terraform_amazon_step1 }}"
+  when: target_stage == "deploy"
+
+- name: "Destroy Terraform infrastructure for step1."
+  shell: terraform destroy -auto-approve
+  args:
+    chdir: "{{ terraform_amazon_step1 }}"
+  when: target_stage == "destroy"
+
+# -------------------------------------
+
+- name: "Create AMI from image."
+  command:
+    argv:
+      - "aws"
+      - "ec2"
+      - "import-image"
+      - "--platform"
+      - "linux"
+      - "--architecture"
+      - "x86_64"
+      - "--description"
+      - "multicloud-proxy"
+      - "--disk-containers"
+      - "Format={{ packer_amazon_image_format }},UserBucket={S3Bucket={{ bucket_name }},S3Key={{ image_name }}}"
+
+  register: "json_task_id"
+  when: target_stage == "deploy"
+
+- name: "Get ImportTaskId."
+  set_fact:
+    task_id: "{{ (json_task_id.stdout | from_json)['ImportTaskId'] }}"
+  when: target_stage == "deploy"
+
+- debug:
+    msg: "ImportTaskId: {{ task_id }}"
+  when: target_stage == "deploy"
+
+- name: "Waiting for import task completion."
+  command:
+    argv:
+      - "aws"
+      - "ec2"
+      - "describe-import-image-tasks"
+      - "--import-task-ids"
+      - "{{ task_id }}"
+  register: "json_task_status"
+  until: ("{{ (json_task_status.stdout | from_json)['ImportImageTasks'][0]['Status'] }}"  == "completed")
+  retries: "20"
+  delay: "60"
+  when: target_stage == "deploy"
+
+- name: "Get ImageId."
+  set_fact:
+    image_id: "{{ (json_task_status.stdout | from_json)['ImportImageTasks'][0]['ImageId'] }}"
+  when: target_stage == "deploy"
+
+- debug:
+    msg: "ImageId: {{ image_id }}"
+  when: target_stage == "deploy"
+
+- name: "Create ImageId tag."
+  ec2_tag:
+    region: "{{ region }}"
+    resource: "{{ image_id }}"
+    state: "present"
+    tags:
+      multicloud-proxy: "true"
+  when: target_stage == "deploy"
+
+# -------------------------------------
+
+- name: "Init Terraform plan for step2."
+  shell: terraform init
+  args:
+    chdir: "{{ terraform_amazon_step2 }}"
+  when: target_stage == "deploy"
+
+- name: "Apply Terraform plan for step2."
+  shell: terraform apply -auto-approve
+  args:
+    chdir: "{{ terraform_amazon_step2 }}"
+  when: target_stage == "deploy"
+
+- name: "Destroy Terraform infrastructure for step2."
+  shell: terraform destroy -auto-approve
+  args:
+    chdir: "{{ terraform_amazon_step2 }}"
+  when: target_stage == "destroy"
+
+# -------------------------------------
+
+- name: "Get AMI info."
+  ec2_ami_info:
+    filters:
+      "tag:multicloud-proxy": "true"
+  register: "ami_info"
+  when: target_stage == "destroy"
+
+#- debug:
+#    msg: "{{ ami_info }}"
+#  when: target_stage == "destroy"
+
+- name: "Delete AMI with snapshot."
+  ec2_ami:
+    image_id: "{{ ami_info.images[0].image_id }}"
+    delete_snapshot: "True"
+    state: "absent"
+  when: target_stage == "destroy"
+
+# -----------------------------------------------------------------------------
+
+- name: "Terraform output."
+  shell: terraform output -json
+  args:
+    chdir: "{{ terraform_amazon_step2 }}"
+  register: "terraform_step2_output"
+  when: target_stage == "deploy"
+
+- name: "Instances public addresses."
+  debug:
+    msg: "{{ (terraform_step2_output.stdout | from_json)['instance_ips']['value'][0] }}"
+  when: target_stage == "deploy"
+
+# -----------------------------------------------------------------------------

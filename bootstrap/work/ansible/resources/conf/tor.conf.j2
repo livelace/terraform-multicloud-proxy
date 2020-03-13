@@ -1,0 +1,10 @@
+DataDirectory /var/lib/tor
+
+SOCKSPort 0.0.0.0:{{ tor_port }}
+
+{% for item in whitelist %}
+SOCKSPolicy accept {{ item }}
+{% endfor %}
+
+SOCKSPolicy reject *
+

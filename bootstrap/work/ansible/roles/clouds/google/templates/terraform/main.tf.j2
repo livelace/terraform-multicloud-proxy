@@ -1,0 +1,124 @@
+provider "google" {
+  credentials = file("{{ conf_auth }}/{{ service_account_key_file }}")
+  project = "{{ project }}"
+  region = "{{ region }}"
+  zone = "{{ zone }}"
+}
+
+resource "google_storage_bucket" "{{ bucket_name }}" {
+  name     = "{{ bucket_name }}"
+  location = "{{ region }}"
+}
+
+resource "google_storage_bucket_object" "{{ image_name }}" {
+  name   = "{{ image_name }}.tar.gz"
+  bucket = "{{ bucket_name }}"
+  source = "{{ packer_images }}/{{ packer_google_target_image }}"
+
+  depends_on = [google_storage_bucket.{{ bucket_name }}]
+}
+
+resource "google_compute_image" "{{ image_name }}" {
+  name = "{{ image_name }}"
+
+  raw_disk {
+    source = "https://storage.googleapis.com/{{ bucket_name }}/{{ image_name }}.tar.gz"
+  }
+
+  depends_on = [google_storage_bucket_object.{{ image_name }}]
+}
+
+resource "google_compute_network" "{{ network_name }}" {
+  name = "{{ network_name }}"
+}
+
+resource "google_compute_subnetwork" "{{ subnet_name }}" {
+  name          = "{{ subnet_name }}"
+  network       = "{{ network_name }}"
+  ip_cidr_range = "{{ subnet_cidr }}"
+  region        = "{{ region }}"
+
+  depends_on = [google_compute_network.{{ network_name }}]
+}
+
+resource "google_compute_firewall" "{{ firewall_name }}" {
+  name    = "{{ firewall_name }}"
+  network = "{{ network_name }}"
+
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["1-65535"]
+  }
+
+  source_ranges = [
+{% for item in whitelist %}
+    "{{ item }}",
+{% endfor %}
+  ]
+
+  depends_on = [google_compute_network.{{ network_name }}]
+}
+
+resource "google_compute_instance" "{{ instance_name }}" {
+  count = {{ count }}
+
+  name = "{{ instance_name }}-${count.index}"
+  machine_type = "{{ machine_type }}"
+  zone         = "{{ zone }}"
+
+  boot_disk {
+    initialize_params {
+      image = "{{ image_name }}"
+    }
+  }
+
+  network_interface {
+    network = "{{ network_name }}"
+    subnetwork = "{{ subnet_name }}"
+
+    access_config {}
+  }
+
+  depends_on = [
+    google_compute_image.{{ image_name }},
+    google_compute_network.{{ network_name }},
+    google_compute_subnetwork.{{ subnet_name }}
+  ]
+}
+
+{% if powerdns_enable == "true" %}
+
+provider "powerdns" {
+  api_key    = "{{ powerdns_api_key }}"
+  server_url = "{{ powerdns_server_url }}"
+}
+
+resource "powerdns_zone" "google" {
+  name    = "google.{{ powerdns_base_zone }}."
+  kind    = "Native"
+  nameservers = [
+    "ns1.google.{{ powerdns_base_zone }}.",
+    "ns2.google.{{ powerdns_base_zone }}."
+  ]
+}
+
+resource "powerdns_record" "google" {
+  count = {{ count }}
+
+  zone    = "google.{{ powerdns_base_zone }}."
+  name    = "{{ instance_name }}-${count.index}.google.{{ powerdns_base_zone }}."
+  type    = "A"
+  ttl     = 300
+  records = [google_compute_instance.{{ instance_name }}[count.index].network_interface[0].access_config[0].nat_ip]
+
+  depends_on = [
+    google_compute_instance.{{ instance_name }},
+    powerdns_zone.google
+  ]
+}
+
+{% endif %}

@@ -1,0 +1,98 @@
+provider "yandex" {
+  cloud_id = "{{ cloud_id }}"
+  folder_id = "{{ folder_id }}"
+  zone = "{{ zone }}"
+  service_account_key_file = "{{ conf_auth }}/{{ service_account_key_file }}"
+  storage_access_key = "{{ storage_access_key }}"
+  storage_secret_key = "{{ storage_secret_key }}"
+  version = "~> 0.31"
+}
+
+resource "yandex_storage_bucket" "{{ bucket_name }}" {
+  bucket = "{{ bucket_name }}"
+  acl = "public-read"
+}
+
+resource "yandex_storage_object" "{{ image_name }}" {
+  bucket = "{{ bucket_name }}"
+  key = "{{ image_name }}"
+  source = "{{ packer_images }}/{{ packer_yandex_target_image }}"
+
+  depends_on = [yandex_storage_bucket.{{ bucket_name }}]
+}
+
+resource "yandex_compute_image" "{{ image_name }}" {
+  name       = "{{ image_name }}"
+  os_type    = "linux"
+  source_url = "https://storage.yandexcloud.net/{{ bucket_name }}/{{ image_name }}"
+
+  depends_on = [yandex_storage_object.{{ image_name }}]
+}
+
+resource "yandex_vpc_network" "{{ network_name }}" {
+  name = "{{ network_name }}"
+}
+
+resource "yandex_vpc_subnet" "{{ subnet_name }}" {
+  v4_cidr_blocks = ["{{ subnet_cidr }}"]
+  zone           = "{{ zone }}"
+  network_id     = yandex_vpc_network.{{ network_name }}.id
+}
+
+resource "yandex_compute_instance" "{{ instance_name }}" {
+  count = {{ count }}
+
+  name        = "{{ instance_name }}-${count.index}"
+  platform_id = "{{ platform_id }}"
+  zone        = "{{ zone }}"
+
+  resources {
+    cores  = {{ cores }}
+    memory = {{ memory }}
+    core_fraction = {{ core_fraction }}
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = yandex_compute_image.{{ image_name }}.id
+    }
+  }
+
+  network_interface {
+    nat = true
+    subnet_id = yandex_vpc_subnet.{{ subnet_name }}.id
+  }
+}
+
+{% if powerdns_enable == "true" %}
+
+provider "powerdns" {
+  api_key    = "{{ powerdns_api_key }}"
+  server_url = "{{ powerdns_server_url }}"
+}
+
+resource "powerdns_zone" "yandex" {
+  name    = "yandex.{{ powerdns_base_zone }}."
+  kind    = "Native"
+  nameservers = [
+    "ns1.yandex.{{ powerdns_base_zone }}.",
+    "ns2.yandex.{{ powerdns_base_zone }}."
+  ]
+}
+
+resource "powerdns_record" "yandex" {
+  count = {{ count }}
+
+  zone    = "yandex.{{ powerdns_base_zone }}."
+  name    = "{{ instance_name }}-${count.index}.yandex.{{ powerdns_base_zone }}."
+  type    = "A"
+  ttl     = 300
+  records = [yandex_compute_instance.{{ instance_name }}[count.index].network_interface[0].nat_ip_address]
+
+  depends_on = [
+    yandex_compute_instance.{{ instance_name }},
+    powerdns_zone.yandex
+  ]
+}
+
+{% endif %}

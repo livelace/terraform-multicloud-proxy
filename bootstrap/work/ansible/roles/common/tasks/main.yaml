@@ -1,0 +1,35 @@
+- name: "Create Packer directory: {{ packer_base }}"
+  file:
+    path: "{{ packer_base }}"
+    state: "directory"
+
+- name: "Create Packer directory: {{ packer_common }}"
+  file:
+    path: "{{ packer_common }}"
+    state: "directory"
+
+- name: "Create Packer directory: {{ packer_common }}/http"
+  file:
+    path: "{{ packer_common }}/http"
+    state: "directory"
+
+- name: "Create Packer directory: {{ packer_common }}/ssh"
+  file:
+    path: "{{ packer_common }}/ssh"
+    state: "directory"
+
+- name: "Create Packer directory: {{ packer_images }}"
+  file:
+    path: "{{ packer_images }}"
+    state: "directory"
+
+- name: "Create Terraform directory: {{ terraform_base }}"
+  file:
+    path: "{{ terraform_base }}"
+    state: "directory"
+
+- name: "Copy enable_ssh.sh to: {{ packer_common }}/http"
+  copy: "src={{ playbook_dir }}/resources/scripts/enable_ssh.sh dest={{ packer_common }}/http/enable_ssh.sh"
+
+- name: "Copy ssh keys to: {{ packer_common }}/ssh"
+  copy: "src={{ playbook_dir }}/resources/ssh dest={{ packer_common }}"

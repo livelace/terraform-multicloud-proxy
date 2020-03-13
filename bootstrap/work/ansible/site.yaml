@@ -1,0 +1,30 @@
+---
+
+- name: "Prepare environment."
+  hosts: all
+  gather_facts: no
+
+  roles:
+    - role: "common"
+      when: target_stage == "genconf"
+
+- name: "Process Amazon configuration."
+  hosts: "amazon"
+
+  roles:
+    - "clouds/amazon"
+
+- name: "Process Google configuration."
+  hosts: "google"
+  gather_facts: no
+
+  roles:
+    - "clouds/google"
+
+- name: "Process Yandex configuration."
+  hosts: "yandex"
+  gather_facts: no
+
+  roles:
+    - "clouds/yandex"
+
