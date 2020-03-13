@@ -189,7 +189,7 @@
       - "{{ task_id }}"
   register: "json_task_status"
   until: ("{{ (json_task_status.stdout | from_json)['ImportImageTasks'][0]['Status'] }}"  == "completed")
-  retries: "20"
+  retries: "{{ import_timeout }}"
   delay: "60"
   when: target_stage == "deploy"
 
