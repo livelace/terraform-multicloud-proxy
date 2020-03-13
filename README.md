@@ -37,6 +37,8 @@ docker run -ti --rm -e UID=$UID \
     livelace/terraform-multicloud-proxy-bootstrap help
 ```
 
+Some commands can be run with specific cloud as an argument.
+
 **Initialize sample configuration:**
 
 ```bash
@@ -49,7 +51,7 @@ docker run -ti --rm -e UID=$UID \
 This will generate and place into "/conf" directory:
 
 1. Sample configuration (inventory-sample.ini with comments).
-2. SSH keys (multicloud, multicloud.pub).
+2. SSH keys (random generated).
 3. Password for root (random generated).
 
 **Generate configurations:**
