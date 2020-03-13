@@ -98,7 +98,7 @@ docker run -ti --rm -e UID=$UID \
     terraform-multicloud-proxy-bootstrap deploy
 ```
 
-This will take some time for deploying virtual machines inside clouds (Amazon is slowest, because of its import image mechanism).  
+This will take some time for deploying virtual machines inside clouds (Amazon is slowest, because of its image importing mechanism).  
 If something goes wrong - just "destroy" infrastructure, fix the problems and try again. 
 
 **Destroy clouds infrastructures:**
