@@ -42,9 +42,6 @@ COPY            work /work
 COPY            entrypoint-pre.sh /entrypoint-pre.sh
 COPY            entrypoint.sh /entrypoint.sh
 
-RUN             mkdir -p /conf /data && \
-                chmod 777 /conf /data
-
 ENTRYPOINT      ["/entrypoint-pre.sh"]
 
 CMD             ["help"]
