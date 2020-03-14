@@ -27,15 +27,6 @@ Typical workflow:
 
 ## Usage:
 
-**Create working directories:**
-
-```bash
-mkdir conf data
-```
-
-All operations inside containers perform under an unprivileged user whose UID matches your host user UID.  
-That is why you have to create these dirs before any further actions (otherwise, directories will be created with root owner).
-
 
 **Get help information:**
 

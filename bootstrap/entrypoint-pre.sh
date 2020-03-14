@@ -5,7 +5,9 @@ if [[ "$UID" = 0 ]];then
     exit 1
 fi
 
-useradd -d /data -u "$UID" user
+useradd -d "/data" -u "$UID" "user"
 
-chown "$UID" /dev/kvm >dev/null 2>&1 || true
+mkdir -p "/conf" "/data" && chown "user:user" "/conf" "/data" >/dev/null 2>&1
+chown "user" "/dev/kvm" >dev/null 2>&1 || true
+
 su user -s /bin/bash -c "/entrypoint.sh $1 $2"
