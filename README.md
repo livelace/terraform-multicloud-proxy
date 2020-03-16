@@ -86,7 +86,7 @@ Don't forget to rebuild images if you change some settings in the configuration 
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    terraform-multicloud-proxy-bootstrap deploy
+    livelace/terraform-multicloud-proxy-bootstrap deploy
 ```
 
 This will take some time for deploying virtual machines inside clouds (Amazon is the slowest one, because of its image importing mechanism). If something goes wrong - just "destroy" infrastructure, fix the problems and try again. 
@@ -97,7 +97,7 @@ This will take some time for deploying virtual machines inside clouds (Amazon is
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    terraform-multicloud-proxy-bootstrap destroy
+    livelace/terraform-multicloud-proxy-bootstrap destroy
 ```
 
 This will destroy every object in clouds that were produced during deployment.
