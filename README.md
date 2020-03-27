@@ -5,7 +5,7 @@ This project is a set of tools that allow to deploy virtual machines with variou
 
 **In-use:**
 
-[alpine linux](https://alpinelinux.org/), [ansible](https://www.ansible.com/), [apache](https://httpd.apache.org/), [awscli](https://github.com/aws/aws-cli), [dante](https://www.inet.no/dante/), [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html), [terraform](https://www.terraform.io/), [tinyproxy](https://github.com/tinyproxy/tinyproxy), [packer](https://packer.io/), [postgres](https://www.postgresql.org/), [powerdns](https://www.powerdns.com/), [poweradmin](https://www.poweradmin.org/), [supervisord](http://supervisord.org/), [qemu-kvm](https://www.qemu.org/), [ubuntu](https://ubuntu.com/).
+[alpine linux](https://alpinelinux.org/), [ansible](https://www.ansible.com/), [apache](https://httpd.apache.org/), [awscli](https://github.com/aws/aws-cli), [dante](https://www.inet.no/dante/), [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html), [packer](https://packer.io/), [postgres](https://www.postgresql.org/), [powerdns](https://www.powerdns.com/), [poweradmin](https://www.poweradmin.org/), [supervisord](http://supervisord.org/), [terraform](https://www.terraform.io/), [tinyproxy](https://github.com/tinyproxy/tinyproxy), [tor](https://www.torproject.org/), [qemu-kvm](https://www.qemu.org/), [ubuntu](https://ubuntu.com/).
 
 The project consists of two docker images:
 
