@@ -71,7 +71,7 @@ echo "{{ alpine_mirror_url }}/alpine/edge/testing" >> "/etc/apk/repositories"
 
 apk update
 apk upgrade
-apk add dante-server htop iperf iptables ip6tables nmap tcpdump tinyproxy tmux tor vim
+apk add dante-server htop iperf iptables ip6tables nmap rsync tcpdump tinyproxy tmux tor vim
 
 rc-update add iptables default
 rc-update add ip6tables default
