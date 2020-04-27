@@ -62,6 +62,9 @@ elif [[ "$ACTION" = "genconf" || "$ACTION" = "build" || "$ACTION" = "deploy" || 
     if [[ ! -f "$INVENTORY_FILE" ]];then
         echo "ERROR: Cannot find configuration file: \"${INVENTORY}\"."
         exit 1
+    elif [[ "$ACTION" = "build" && ! -c "/dev/kvm" ]];then
+        echo "ERROR: Cannot find KVM device: /dev/kvm"
+        exit 1
     else
 
         if [[ "$ARG" ]];then
