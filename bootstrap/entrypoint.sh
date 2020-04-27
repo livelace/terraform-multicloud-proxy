@@ -85,7 +85,7 @@ elif [[ "$ACTION" = "genconf" || "$ACTION" = "build" || "$ACTION" = "deploy" || 
 elif [[ "$ACTION" = "clean" ]];then
     echo "INFO: Perform cleanup. You have 10 seconds to change your mind [CTRL+C] ..."
     sleep 10
-    rm -rf "/data/*" "/data/.*" >/dev/null 2>&1
+    rm -rf /data/* /data/.* >/dev/null 2>&1
 
 elif [[ "$ACTION" = "shell" ]];then
     exec /bin/bash
