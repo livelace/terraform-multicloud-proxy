@@ -45,7 +45,7 @@ Some commands can be run with a specific cloud as an argument.
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    livelace/terraform-multicloud-proxy-bootstrap init
+    ghcr.io/livelace/terraform-multicloud-proxy-bootstrap init
 ```
 
 This will generate and place into "/conf" directory:
@@ -60,7 +60,7 @@ This will generate and place into "/conf" directory:
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    livelace/terraform-multicloud-proxy-bootstrap genconf
+    ghcr.io/livelace/terraform-multicloud-proxy-bootstrap genconf
 ```
 
 This will produce different configurations for above mentioned apps and place all those stuff into "/data" directory.  
@@ -74,7 +74,7 @@ docker run -ti --rm -e UID=$UID \
     -v /dev/kvm:/dev/kvm \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    livelace/terraform-multicloud-proxy-bootstrap build
+    ghcr.io/livelace/terraform-multicloud-proxy-bootstrap build
 ```
 
 This will produce virtual machines images with individual settings for every cloud provider and place those images into "/data/packer/images".  
@@ -86,7 +86,7 @@ Don't forget to rebuild images if you change some settings in the configuration 
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    livelace/terraform-multicloud-proxy-bootstrap deploy
+    ghcr.io/livelace/terraform-multicloud-proxy-bootstrap deploy
 ```
 
 This will take some time for deploying virtual machines inside clouds (Amazon is the slowest one, because of its image importing mechanism). If something goes wrong - just "destroy" infrastructure, fix the problems and try again. 
@@ -97,7 +97,7 @@ This will take some time for deploying virtual machines inside clouds (Amazon is
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    livelace/terraform-multicloud-proxy-bootstrap destroy
+    ghcr.io/livelace/terraform-multicloud-proxy-bootstrap destroy
 ```
 
 This will destroy every object in clouds that were produced during deployment.
