@@ -34,7 +34,7 @@ Typical workflow:
 docker run -ti --rm -e UID=$UID \
     -v $(pwd)/conf:/conf \
     -v $(pwd)/data:/data \
-    livelace/terraform-multicloud-proxy-bootstrap help
+    ghcr.io/livelace/terraform-multicloud-proxy-bootstrap help
 ```
 
 Some commands can be run with a specific cloud as an argument.
